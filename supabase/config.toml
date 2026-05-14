@@ -1,0 +1,8 @@
+# Supabase local / CLI config. Link a remote project with: supabase link --project-ref <ref>
+# Apply migrations: supabase db push   (remote) or supabase db reset (local)
+
+[api]
+enabled = true
+
+[db]
+major_version = 15

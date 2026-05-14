@@ -24,25 +24,63 @@ All copy, classes, testimonials, and imagery are driven by `lib/trainer-content.
 - **[Tailwind CSS v4](https://tailwindcss.com)** — via `@tailwindcss/postcss`
 - **[Geist + Geist Mono](https://vercel.com/font)** — loaded through `next/font/google`
 - **ESLint 9** — using `eslint-config-next`
+- **[@supabase/supabase-js](https://supabase.com/docs/reference/javascript/introduction)** + **[@supabase/ssr](https://supabase.com/docs/guides/auth/server-side/nextjs)** — email/password auth, RLS-backed reads
 - **Unsplash** — remote images allow-listed in `next.config.ts`
 
-> A Supabase-backed dashboard/booking backend is planned (see `.cursor/plans/`) but the current site is fully static and content-driven.
+> **Supabase:** SQL migrations live in `supabase/migrations/`. Auth routes: `/login`, `/signup`, `/auth/callback`. Mock dashboards: `/dashboard` (user; admins are redirected to `/admin`), `/admin` (admin only). See **Supabase setup** below.
 
 ## Project structure
 
 ```
 app/
-  layout.tsx         # Root layout, fonts, metadata
-  page.tsx           # Composes the landing page sections
-  globals.css        # Tailwind v4 styles
+  layout.tsx
+  page.tsx
+  globals.css
+  login/                 # Sign-in + server action
+  signup/                # Sign-up + server action
+  auth/
+    callback/route.ts    # Email confirm / PKCE code exchange
+    actions.ts           # Logout
+  dashboard/page.tsx    # Mock user dashboard
+  admin/page.tsx        # Mock admin dashboard
+  unauthorized/page.tsx
 components/
-  landing/           # Navbar, Hero, WeeklySchedule, About, Testimonials, FinalCta, SiteFooter
+  landing/
+  auth/                  # AuthCard
 lib/
-  trainer-content.ts # All site copy + data (single source of truth)
-  types.ts           # Session, Testimonial, AboutContent, FooterContent, etc.
-public/              # Static assets
-next.config.ts       # Image remote patterns
+  trainer-content.ts
+  types.ts
+  supabase/              # Browser + server + middleware + route-handler clients
+  auth/role.ts
+middleware.ts
+supabase/migrations/    # Postgres schema + RLS
+public/
+next.config.ts
 ```
+
+## Supabase setup
+
+1. Create a project at [supabase.com](https://supabase.com) (or use the [Supabase CLI](https://supabase.com/docs/guides/cli) locally).
+2. Copy [`.env.example`](./.env.example) to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from **Project Settings → API**.
+3. Apply the schema: paste [`supabase/migrations/20260514130000_initial_schema.sql`](./supabase/migrations/20260514130000_initial_schema.sql) into the **SQL Editor** and run it, or use `supabase link` + `supabase db push` with a linked project.
+4. Under **Authentication → Providers**, enable **Email**. For local smoke tests you can disable **Confirm email** so sign-up returns a session immediately; otherwise users must confirm via email before signing in.
+5. **Grant admin (manual):** in **Authentication → Users**, copy the user’s UUID, then run in the SQL Editor (replace the placeholder UUID):
+
+```sql
+update public.user_roles
+set role = 'admin'
+where user_id = '00000000-0000-0000-0000-000000000000';
+```
+
+If no `user_roles` row exists (unlikely after signup), use:
+
+```sql
+insert into public.user_roles (user_id, role)
+values ('00000000-0000-0000-0000-000000000000', 'admin')
+on conflict (user_id) do update set role = excluded.role;
+```
+
+6. Run `npm run dev`, register a test user, open `/dashboard` after login. Log in as the admin user and open `/admin`. Non-admins who visit `/admin` are redirected to `/unauthorized`.
 
 ## Getting started
 

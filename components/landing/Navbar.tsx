@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { hero, trainerName } from "@/lib/trainer-content";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { fetchAppRole } from "@/lib/auth/role";
+import { getAvatarSignedUrl } from "@/lib/avatar";
+import { UserMenu } from "@/components/landing/UserMenu";
 
 const navLinks = [
   { href: "#weekly-schedule", label: "Schedule" },
@@ -7,7 +11,30 @@ const navLinks = [
   { href: "#testimonials", label: "Testimonials" },
 ] as const;
 
-export function Navbar() {
+export async function Navbar() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let displayName: string | null = null;
+  let avatarUrl: string | null = null;
+  let role: "user" | "client" | "admin" | null = null;
+
+  if (user) {
+    const [{ data: profile }, resolvedRole] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("id", user.id)
+        .maybeSingle(),
+      fetchAppRole(supabase, user.id),
+    ]);
+    displayName = profile?.display_name ?? null;
+    role = resolvedRole;
+    avatarUrl = await getAvatarSignedUrl(supabase, profile?.avatar_url);
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md">
       <nav
@@ -34,13 +61,30 @@ export function Navbar() {
           ))}
         </ul>
 
-        <a
-          href="#weekly-schedule"
-          className="shrink-0 rounded-full bg-accent px-3 py-2 text-center text-xs font-semibold text-white shadow-sm transition hover:bg-accent-muted sm:px-5 sm:text-sm"
-        >
-          <span className="hidden sm:inline">{hero.primaryCta}</span>
-          <span className="sm:hidden">Schedule</span>
-        </a>
+        <div className="flex shrink-0 items-center gap-2">
+          {user ? (
+            <UserMenu
+              email={user.email ?? ""}
+              displayName={displayName}
+              avatarUrl={avatarUrl}
+              role={role}
+            />
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-full border border-border px-3 py-2 text-center text-xs font-medium text-foreground transition hover:bg-card sm:px-4 sm:text-sm"
+            >
+              Log in
+            </Link>
+          )}
+          <a
+            href="#weekly-schedule"
+            className="rounded-full bg-accent px-3 py-2 text-center text-xs font-semibold text-white shadow-sm transition hover:bg-accent-muted sm:px-5 sm:text-sm"
+          >
+            <span className="hidden sm:inline">{hero.primaryCta}</span>
+            <span className="sm:hidden">Schedule</span>
+          </a>
+        </div>
       </nav>
     </header>
   );
