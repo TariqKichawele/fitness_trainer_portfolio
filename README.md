@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fitness Trainer Portfolio
 
-## Getting Started
+A modern, single-page marketing site for a personal trainer (demo persona: **Alex Moreno**). The site showcases the trainer's brand, weekly small-group class schedule, bio and credentials, client testimonials, and a final call-to-action — all rendered from a single, typed content file so the trainer's info can be updated in one place.
 
-First, run the development server:
+## What's inside
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The landing page is composed of focused sections:
+
+- **Navbar** — sticky top navigation with anchor links to each section
+- **Hero** — headline, tagline, primary/secondary CTAs, and a hero image
+- **Weekly Schedule** — Monday–Saturday class cards with category, duration, location, and remaining spots
+- **About** — coach bio, credentials, and gallery imagery
+- **Testimonials** — quotes from clients across different class types
+- **Final CTA** — closing prompt to book a session
+- **Site Footer** — tagline, email, and social handle
+
+All copy, classes, testimonials, and imagery are driven by `lib/trainer-content.ts`, with shared types in `lib/types.ts`.
+
+## Tech stack
+
+- **[Next.js 16](https://nextjs.org)** — App Router, React Server Components, `next/font`, and `next/image` remote patterns
+- **[React 19](https://react.dev)**
+- **[TypeScript 5](https://www.typescriptlang.org)** — strict, fully typed content model
+- **[Tailwind CSS v4](https://tailwindcss.com)** — via `@tailwindcss/postcss`
+- **[Geist + Geist Mono](https://vercel.com/font)** — loaded through `next/font/google`
+- **ESLint 9** — using `eslint-config-next`
+- **Unsplash** — remote images allow-listed in `next.config.ts`
+
+> A Supabase-backed dashboard/booking backend is planned (see `.cursor/plans/`) but the current site is fully static and content-driven.
+
+## Project structure
+
+```
+app/
+  layout.tsx         # Root layout, fonts, metadata
+  page.tsx           # Composes the landing page sections
+  globals.css        # Tailwind v4 styles
+components/
+  landing/           # Navbar, Hero, WeeklySchedule, About, Testimonials, FinalCta, SiteFooter
+lib/
+  trainer-content.ts # All site copy + data (single source of truth)
+  types.ts           # Session, Testimonial, AboutContent, FooterContent, etc.
+public/              # Static assets
+next.config.ts       # Image remote patterns
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Getting started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Install dependencies and run the dev server:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) to view the site. The page hot-reloads as you edit files.
 
-To learn more about Next.js, take a look at the following resources:
+### Available scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Script          | Description                          |
+| --------------- | ------------------------------------ |
+| `npm run dev`   | Start the Next.js development server |
+| `npm run build` | Create a production build            |
+| `npm start`     | Run the production build             |
+| `npm run lint`  | Lint the project with ESLint         |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Customizing the content
 
-## Deploy on Vercel
+To rebrand the site for a different trainer, edit `lib/trainer-content.ts`:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `trainerName`, `siteTagline` — used across metadata and footer
+- `hero`, `heroImage` — top-of-page content
+- `sessions` — weekly class list (typed by `Session` in `lib/types.ts`)
+- `about` — bio, credentials, gallery images
+- `testimonials` — client quotes
+- `finalCta`, `footer` — closing CTA and footer details
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+If you point to images on a new external host, add it to `next.config.ts` under `images.remotePatterns`.
+
+## Deployment
+
+Built to deploy on [Vercel](https://vercel.com/new) with zero configuration. Any platform that supports a standard Next.js production build (`npm run build` + `npm start`) will also work.
