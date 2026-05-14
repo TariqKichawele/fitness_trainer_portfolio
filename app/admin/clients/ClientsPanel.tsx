@@ -37,10 +37,13 @@ export function ClientsPanel({
     ) : null;
 
   useEffect(() => {
+    const dlg = dialogRef.current;
     if (editing) {
-      dialogRef.current?.showModal();
-    } else {
-      dialogRef.current?.close();
+      if (dlg && !dlg.open) {
+        dlg.showModal();
+      }
+    } else if (dlg?.open) {
+      dlg.close();
     }
   }, [editing]);
 

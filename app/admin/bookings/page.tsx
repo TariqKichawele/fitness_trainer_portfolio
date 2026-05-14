@@ -34,6 +34,10 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
     supabase.rpc("admin_list_clients"),
   ]);
 
+  if (clientsRes.error) {
+    console.error("[admin/bookings] admin_list_clients failed:", clientsRes.error);
+  }
+
   const clients = (clientsRes.error ? [] : (clientsRes.data ?? [])) as ClientDirectoryRow[];
 
   const filtered = filterBookings(bookings, activeFilters);
@@ -56,7 +60,7 @@ export default async function AdminBookingsPage({ searchParams }: PageProps) {
 
       {clientsRes.error ? (
         <p className="mt-4 text-sm text-red-600" role="alert">
-          {clientsRes.error.message}
+          Unable to load clients
         </p>
       ) : null}
 

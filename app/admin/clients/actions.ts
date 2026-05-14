@@ -47,28 +47,20 @@ export async function updateClientAction(formData: FormData) {
     );
   }
 
-  const { error: pErr } = await supabase
-    .from("profiles")
-    .update({
-      display_name,
-      phone_number,
-      address_line_1,
-      address_line_2,
-      post_code,
-    })
-    .eq("id", userId);
+  const { error } = await supabase.rpc("upsert_profile_and_role", {
+    p_user_id: userId,
+    p_display_name: display_name,
+    p_phone_number: phone_number,
+    p_address_line_1: address_line_1,
+    p_address_line_2: address_line_2,
+    p_post_code: post_code,
+    p_role: roleRaw,
+  });
 
-  if (pErr) {
-    redirect("/admin/clients?err=" + encodeURIComponent(pErr.message) + roleQuerySuffix(formData));
-  }
-
-  const { error: rErr } = await supabase
-    .from("user_roles")
-    .update({ role: roleRaw })
-    .eq("user_id", userId);
-
-  if (rErr) {
-    redirect("/admin/clients?err=" + encodeURIComponent(rErr.message) + roleQuerySuffix(formData));
+  if (error) {
+    redirect(
+      "/admin/clients?err=" + encodeURIComponent(error.message) + roleQuerySuffix(formData),
+    );
   }
 
   revalidatePath("/admin");

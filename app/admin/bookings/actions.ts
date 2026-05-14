@@ -19,6 +19,9 @@ const paymentStatuses = new Set(["unpaid", "paid_on_site", "waived", ""]);
 const filterStatusSet = new Set<string>(BOOKING_FILTER_STATUSES);
 const filterRangeSet = new Set<string>(DATE_RANGE_KEYS);
 
+const BOOKING_DB_ERROR_FLASH =
+  "We could not complete that action. Please try again.";
+
 function uuidLike(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     s,
@@ -85,7 +88,10 @@ export async function createBookingAction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/admin/bookings?err=" + encodeURIComponent(error.message) + fq);
+    console.error("[admin/bookings] createBookingAction insert failed:", error);
+    redirect(
+      "/admin/bookings?err=" + encodeURIComponent(BOOKING_DB_ERROR_FLASH) + fq,
+    );
   }
   revalidatePath("/admin");
   revalidatePath("/admin/bookings");
@@ -124,7 +130,10 @@ export async function updateBookingAction(formData: FormData) {
     .eq("id", id);
 
   if (error) {
-    redirect("/admin/bookings?err=" + encodeURIComponent(error.message) + fq);
+    console.error("[admin/bookings] updateBookingAction failed:", error);
+    redirect(
+      "/admin/bookings?err=" + encodeURIComponent(BOOKING_DB_ERROR_FLASH) + fq,
+    );
   }
   revalidatePath("/admin");
   revalidatePath("/admin/bookings");
@@ -142,7 +151,10 @@ export async function deleteBookingAction(formData: FormData) {
 
   const { error } = await supabase.from("bookings").delete().eq("id", id);
   if (error) {
-    redirect("/admin/bookings?err=" + encodeURIComponent(error.message) + fq);
+    console.error("[admin/bookings] deleteBookingAction failed:", error);
+    redirect(
+      "/admin/bookings?err=" + encodeURIComponent(BOOKING_DB_ERROR_FLASH) + fq,
+    );
   }
   revalidatePath("/admin");
   revalidatePath("/admin/bookings");
