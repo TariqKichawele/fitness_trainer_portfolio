@@ -1,21 +1,30 @@
 ---
 name: Backend dashboards Supabase
-overview: Add Supabase (Postgres, Auth, Storage, Edge Functions) behind the existing Next.js 16 landing app, introduce role-based app routes for users/clients/admins, and ship phased dashboards with RLS-first security, audit history, and on-brand UI (shadcn + top-left toasts). Assumptions noted where choices were skipped.
+overview: Add Supabase behind Next.js 16, then auth pages and role-gated routes. First execution wave (agreed) is database + migrations, signup/login, manual admin role in Supabase, then mock admin + user dashboards to verify auth and RLS. Later waves add full booking/session CRUD, history, and polish (shadcn + toasts per plan).
 todos:
-  - id: supabase-foundation
-    content: Create Supabase project, CLI migrations folder, env vars, SSR Supabase clients + auth callback + middleware session refresh
+  - id: wave-a-supabase-tables
+    content: "Wave A: Supabase project + CLI migrations — create all v1 tables (§6), RLS for profiles/user_roles, handle_new_user trigger (profile + role user)"
+    status: pending
+  - id: wave-b-auth-pages
+    content: "Wave B: Next.js Supabase SSR clients, middleware, /login /signup /auth/callback, logout"
+    status: pending
+  - id: wave-c-manual-admin
+    content: "Wave C: Document manual admin — after tables exist, grant admin via Supabase SQL/dashboard (user_roles row); no auto-admin in app for this wave"
+    status: pending
+  - id: wave-d-mock-dashboards
+    content: "Wave D: Mock /admin and user dashboard routes, role guards, /unauthorized — test signup, login, admin vs user"
     status: pending
   - id: schema-rls-v1
-    content: Implement P0–P1 tables (profiles with address_line_1/2, post_code, phone_number; roles; session_types; occurrences; bookings) + RLS + RPCs for book/cancel
+    content: Full booking RPCs + session CRUD RLS — after wave D smoke test
     status: pending
   - id: ui-shell-shadcn
     content: Add shadcn/ui + Sonner (top-left); app route groups for marketing vs authenticated shells; branding from globals.css
     status: pending
   - id: public-auth-pages
-    content: Build /login, /signup, /account/profile (incl. address_line_1/2, post_code, phone_number), role-based redirects and /unauthorized
+    content: /account/profile (address + phone) — after mock dashboards stable
     status: pending
   - id: admin-client-pages
-    content: Implement admin CRUD pages + client dashboard/bookings with slug routes; modals for confirm/small edits only
+    content: Implement real admin CRUD + client booking pages with slug routes; modals for confirm/small edits only
     status: pending
   - id: history-audit
     content: Add history tables + triggers (and optional Edge Functions) for login, bookings, sessions, admin actions
@@ -36,10 +45,25 @@ isProject: false
 **Assumptions (questions were skipped):**
 
 - **Calendar model:** Start with **session types (catalog)** + **scheduled occurrences** (each row is a bookable event with `starts_at` / `ends_at`). Add **recurrence** in a later phase only if needed (keeps v1 shippable while matching “availability for a period / ongoing”).
-- **Admin access:** Document **two supported paths**: (1) `ADMIN_EMAILS` env allowlist for safe local/staging auto-promotion; (2) production uses **manual role assignment** in Supabase (or a one-off Edge Function) so admin is never accidental.
+- **Admin access (first wave):** **Manual only** — insert `admin` into `user_roles` in Supabase SQL/dashboard after tables exist (**§0 step C**). Later optional: `ADMIN_EMAILS` env allowlist for staging, or invite-only Edge Function.
 - **Single business / single trainer** for v1 (schema can keep `trainer_id` nullable UUID for future multi-trainer without a big rewrite).
 
 **Framework note:** This repo uses **Next.js 16** and **React 19** ([`package.json`](/Users/tariqkichawele/Desktop/fitness_trainer_portfolio/package.json)). Before implementing server/auth patterns, read the local Next guide under `node_modules/next/dist/docs/` (per [`AGENTS.md`](/Users/tariqkichawele/Desktop/fitness_trainer_portfolio/AGENTS.md)) because APIs differ from older Next versions.
+
+---
+
+## 0. First execution wave (agreed order — implement before broader scope)
+
+Ship in this order so you can **manually create the admin** in Supabase and **smoke-test roles** before building real booking/session UIs.
+
+| Step | What | Done when |
+|------|------|-----------|
+| **A. Supabase + all tables** | Supabase project (hosted or local), `supabase/migrations/*` in git, **full v1 schema from §6** (profiles, `user_roles`, session types/occurrences, bookings, availability, history tables as defined — migrations can create tables with minimal RLS first, then tighten). `auth.users` → **`profiles`** + default **`user_roles.role = user`** trigger (or equivalent `on_auth_user_created`). | `supabase db push` / dashboard apply succeeds; tables visible in Table Editor |
+| **B. Signup + login** | Next: `@supabase/supabase-js`, `@supabase/ssr`, `middleware.ts` session refresh, Route Handler or app route for **`/auth/callback`**, pages **`/login`**, **`/signup`**, sign-out. Use **email + password** (and/or magic link) per Supabase Auth settings. | New user appears in Auth + `profiles` + `user_roles` as `user` |
+| **C. Roles — manual admin** | **Do not** auto-promote admins in app for this wave unless you later re-enable `ADMIN_EMAILS`. After **A** is live: create or pick a user in **Authentication**, copy their UUID, **`insert into user_roles (user_id, role, …)` with `role = 'admin'`** in SQL Editor (and ensure only one logical “primary” admin row per user if you use single-row semantics). Document exact SQL in README or `IMPLEMENTATION_PLAN.md`. | That user’s JWT/session can read admin-only policies |
+| **D. Mock dashboards** | **`/admin`** — placeholder layout (cards, nav shell), **RLS + middleware**: only `admin` role. **`/dashboard`** (or **`/client`**) — placeholder “User dashboard” for any signed-in **non-admin** (or all authenticated users initially; refine to `client` later). **`/unauthorized`** for wrong role. Optional: link from landing Navbar to Login. | Signup → lands on user mock; manual admin → lands on admin mock; cross-visit → 403/unauthorized |
+
+**Out of scope for this wave:** Real session/booking CRUD, CSV reports, Sonner/shadcn polish (can follow immediately after D), history triggers beyond what’s needed for inserts.
 
 ---
 
@@ -314,9 +338,10 @@ If Auth webhooks are not used, fallback: log **app-level** sign-in in Next middl
 
 | Phase | Outcome |
 |-------|---------|
-| **P0** | Supabase wired, auth pages, profiles, middleware, toasts, shadcn base, branding applied to app shell |
+| **§0 / Wave A–D** | **(Current priority)** All tables + migrations; signup/login/logout; **manual** admin `user_roles`; **mock** `/admin` + user `/dashboard` (or `/client`) + `/unauthorized`; minimal RLS to prove role separation |
+| **P0 (polish)** | shadcn + Sonner top-left, app shell layout, `/account/profile` with address + phone fields, env docs `.env.example` |
 | **P1** | Session types + occurrences CRUD (admin), public schedule read, client booking create/cancel |
-| **P2** | Roles (`user` → `client`), admin clients list, ban/reject, booking admin tools |
+| **P2** | Auto `user` → `client` on first confirmed booking; admin clients list, ban/reject, booking admin tools |
 | **P3** | Availability rules/exceptions affecting visibility |
 | **P4** | History completeness (triggers), reporting CSV, audit viewer |
 | **P5** | Storage avatars, polish, performance indexes |
@@ -342,6 +367,7 @@ Keep `price_cents` and booking states; add `stripe_customer_id` on `profiles`, `
 
 ## 16. Post-approval action (Agent mode)
 
-1. Add [`IMPLEMENTATION_PLAN.md`](/Users/tariqkichawele/Desktop/fitness_trainer_portfolio/IMPLEMENTATION_PLAN.md) with this full plan (minor edits if you answer follow-up questions later).
-2. Do **not** commit secrets; add `.env.example` documenting vars.
-3. Begin **P0** implementation following `node_modules/next/dist/docs/` for Next 16 auth/cookies/middleware patterns.
+1. Sync this plan into repo-root [`IMPLEMENTATION_PLAN.md`](/Users/tariqkichawele/Desktop/fitness_trainer_portfolio/IMPLEMENTATION_PLAN.md) when requested.
+2. Do **not** commit secrets; add `.env.example` documenting `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, optional `SUPABASE_SERVICE_ROLE_KEY` (server-only).
+3. Implement in order **§0 steps A → B → C (docs + manual SQL) → D**, using `node_modules/next/dist/docs/` for Next 16 auth/cookies/middleware patterns.
+4. After **D** passes manual smoke tests, continue **P0–P1** from the table in §13.
