@@ -20,7 +20,7 @@ export async function signupAction(formData: FormData) {
       data: {
         full_name: displayName || undefined,
       },
-      emailRedirectTo: `${siteUrl}/auth/callback?next=/profile`,
+      emailRedirectTo: `${siteUrl}/auth/callback?next=/dashboard`,
     },
   });
 
@@ -29,7 +29,7 @@ export async function signupAction(formData: FormData) {
   }
 
   if (data.session) {
-    redirect("/profile");
+    redirect("/dashboard");
   }
 
   redirect("/signup?notice=confirm_email");

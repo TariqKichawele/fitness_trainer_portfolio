@@ -8,6 +8,8 @@ import {
   AVATAR_BUCKET,
   AVATAR_MAX_BYTES,
 } from "@/lib/avatar";
+import { isProfileCompleteForBooking } from "@/lib/profile/requirements";
+import { safeNextPath } from "@/lib/profile/safe-next";
 
 function extensionForMimeType(type: string): string {
   switch (type) {
@@ -165,13 +167,29 @@ export async function updateProfileAction(formData: FormData) {
     .eq("id", user.id);
 
   if (error) {
+    const nextQ = safeNextPath(formData.get("next"), "");
+    const nextSuffix =
+      nextQ !== "" ? `&next=${encodeURIComponent(nextQ)}` : "";
     redirect(
-      `/profile?profile_error=${encodeURIComponent(error.message)}`,
+      `/profile?profile_error=${encodeURIComponent(error.message)}${nextSuffix}`,
     );
   }
 
   revalidatePath("/", "layout");
-  redirect("/profile?profile_notice=saved");
+  revalidatePath("/dashboard/book");
+
+  const next = safeNextPath(formData.get("next"), "");
+  const updated = {
+    phone_number,
+    address_line_1,
+    post_code,
+  };
+  if (next && isProfileCompleteForBooking(updated)) {
+    redirect(next);
+  }
+
+  const nextSuffix = next ? `&next=${encodeURIComponent(next)}` : "";
+  redirect(`/profile?profile_notice=saved${nextSuffix}`);
 }
 
 export async function updateEmailAction(formData: FormData) {

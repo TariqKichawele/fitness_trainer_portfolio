@@ -129,6 +129,16 @@ export function UserMenu({
             ) : null}
           </div>
           <div className="flex flex-col py-1">
+            {role !== "admin" ? (
+              <Link
+                href="/dashboard"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 text-sm text-foreground transition hover:bg-card"
+              >
+                Dashboard
+              </Link>
+            ) : null}
             <Link
               href="/profile"
               role="menuitem"

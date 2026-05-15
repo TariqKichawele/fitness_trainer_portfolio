@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { BOOKING_FILTER_STATUSES, DATE_RANGE_KEYS } from "@/lib/admin/booking-filters";
+import { notifyBookingStatusChange } from "@/lib/notifications/create";
 
 const bookingStatuses = new Set([
   "pending",
@@ -124,6 +125,22 @@ export async function updateBookingAction(formData: FormData) {
     );
   }
 
+  const { data: existing } = await supabase
+    .from("bookings")
+    .select(
+      `
+      user_id,
+      status,
+      session_occurrences (
+        starts_at,
+        title_override,
+        session_types ( title )
+      )
+    `,
+    )
+    .eq("id", id)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("bookings")
     .update({ status, payment_status })
@@ -135,8 +152,36 @@ export async function updateBookingAction(formData: FormData) {
       "/admin/bookings?err=" + encodeURIComponent(BOOKING_DB_ERROR_FLASH) + fq,
     );
   }
+
+  if (
+    existing &&
+    existing.status !== status &&
+    (status === "confirmed" || status === "cancelled_by_admin")
+  ) {
+    const rawOcc = existing.session_occurrences;
+    const occ = (Array.isArray(rawOcc) ? rawOcc[0] : rawOcc) as {
+      starts_at: string;
+      title_override?: string | null;
+      session_types?: { title: string } | { title: string }[] | null;
+    } | null | undefined;
+    const st = occ?.session_types;
+    const title =
+      occ?.title_override?.trim() ||
+      (Array.isArray(st) ? st[0]?.title : (st as { title?: string } | null)?.title) ||
+      "Session";
+
+    await notifyBookingStatusChange(supabase, {
+      userId: existing.user_id as string,
+      bookingId: id,
+      status,
+      sessionTitle: title,
+      startsAt: occ?.starts_at ?? "",
+    });
+  }
+
   revalidatePath("/admin");
   revalidatePath("/admin/bookings");
+  revalidatePath("/dashboard", "layout");
   redirect("/admin/bookings?ok=updated" + fq);
 }
 

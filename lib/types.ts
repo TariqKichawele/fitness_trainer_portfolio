@@ -1,29 +1,3 @@
-export type SessionCategory = "Strength" | "Conditioning" | "Mobility";
-
-export type SessionLocation = "Studio" | "Outdoor";
-
-export type Weekday =
-  | "Monday"
-  | "Tuesday"
-  | "Wednesday"
-  | "Thursday"
-  | "Friday"
-  | "Saturday"
-  | "Sunday";
-
-export type Session = {
-  id: string;
-  name: string;
-  day: Weekday;
-  category: SessionCategory;
-  durationMin: number;
-  /** Total capacity for the class */
-  spots: number;
-  /** Booked seats (fake demo data) */
-  spotsTaken: number;
-  location: SessionLocation;
-};
-
 export type Testimonial = {
   id: string;
   quote: string;

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { hero, trainerName } from "@/lib/trainer-content";
+import { trainerName } from "@/lib/trainer-content";
+import { BOOK_PROFILE_NEXT } from "@/lib/profile/requirements";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { fetchAppRole } from "@/lib/auth/role";
 import { getAvatarSignedUrl } from "@/lib/avatar";
@@ -20,6 +21,10 @@ export async function Navbar() {
   let displayName: string | null = null;
   let avatarUrl: string | null = null;
   let role: "user" | "client" | "admin" | null = null;
+
+  const bookHref = user
+    ? BOOK_PROFILE_NEXT
+    : `/login?next=${encodeURIComponent(BOOK_PROFILE_NEXT)}`;
 
   if (user) {
     const [{ data: profile }, resolvedRole] = await Promise.all([
@@ -77,13 +82,13 @@ export async function Navbar() {
               Log in
             </Link>
           )}
-          <a
-            href="#weekly-schedule"
+          <Link
+            href={bookHref}
             className="rounded-full bg-accent px-3 py-2 text-center text-xs font-semibold text-white shadow-sm transition hover:bg-accent-muted sm:px-5 sm:text-sm"
           >
-            <span className="hidden sm:inline">{hero.primaryCta}</span>
-            <span className="sm:hidden">Schedule</span>
-          </a>
+            <span className="hidden sm:inline">Book a session</span>
+            <span className="sm:hidden">Book</span>
+          </Link>
         </div>
       </nav>
     </header>

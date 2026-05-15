@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { SupabaseCookie } from "@/lib/supabase/cookie-options";
 
 export async function createSupabaseRouteHandlerClient() {
   const cookieStore = await cookies();
@@ -16,7 +17,7 @@ export async function createSupabaseRouteHandlerClient() {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet: SupabaseCookie[]) {
         cookiesToSet.forEach(({ name, value, options }) => {
           cookieStore.set(name, value, options);
         });
