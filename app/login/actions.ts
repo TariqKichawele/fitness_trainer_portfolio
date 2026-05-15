@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 
 function safeNextPath(raw: unknown): string {
   if (typeof raw !== "string" || !raw.startsWith("/") || raw.startsWith("//")) {
-    return "/profile";
+    return "/dashboard";
   }
   return raw;
 }

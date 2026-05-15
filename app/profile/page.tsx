@@ -10,6 +10,8 @@ import {
   updateEmailAction,
   updatePasswordAction,
 } from "@/app/profile/actions";
+import { BOOK_PROFILE_NEXT } from "@/lib/profile/requirements";
+import { safeNextPath } from "@/lib/profile/safe-next";
 
 const fieldClass =
   "rounded-lg border border-border bg-background px-3 py-2 text-foreground outline-none ring-accent/30 transition focus:ring-2";
@@ -22,6 +24,7 @@ type ProfilePageProps = {
     profile_notice?: string;
     credential_error?: string;
     credential_notice?: string;
+    next?: string;
   }>;
 };
 
@@ -35,6 +38,8 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
   }
 
   const sp = await searchParams;
+  const nextPath = safeNextPath(sp.next, "");
+  const returningToBook = nextPath === BOOK_PROFILE_NEXT;
 
   const [{ data: profile }, role] = await Promise.all([
     supabase
@@ -58,7 +63,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
       .split(/\s+/)
       .filter(Boolean)
       .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? "")
+      .map((part: string) => part[0]?.toUpperCase() ?? "")
       .join("") || "?";
 
   const avatarErrorMessage = (() => {
@@ -203,6 +208,16 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
         </p>
       ) : null}
 
+      {returningToBook ? (
+        <div className="mt-6 rounded-xl border border-accent/30 bg-accent/5 p-4 text-sm text-foreground">
+          <p className="font-medium">Complete your profile to book a session</p>
+          <p className="mt-1 text-muted">
+            Phone, address line 1, and post code are required. You will return to
+            booking after you save.
+          </p>
+        </div>
+      ) : null}
+
       <section className="mt-8 grid gap-4 sm:grid-cols-2">
         <div className="rounded-xl border border-border bg-card p-5">
           <h2 className="text-sm font-medium text-muted">Role</h2>
@@ -223,6 +238,9 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
             Update how we show your name and how to reach you.
           </p>
           <form action={updateProfileAction} className="mt-4 flex flex-col gap-4">
+            {nextPath ? (
+              <input type="hidden" name="next" value={nextPath} />
+            ) : null}
             <label className="flex flex-col gap-1.5 text-sm font-medium text-foreground">
               Display name
               <input

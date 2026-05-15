@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import type { SupabaseCookie } from "@/lib/supabase/cookie-options";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -15,7 +16,7 @@ export async function updateSession(request: NextRequest) {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet: SupabaseCookie[]) {
         cookiesToSet.forEach(({ name, value }) => {
           request.cookies.set(name, value);
         });
@@ -52,7 +53,7 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  if (path.startsWith("/profile")) {
+  if (path.startsWith("/profile") || path.startsWith("/dashboard")) {
     if (!user) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = "/login";
@@ -73,7 +74,7 @@ export async function updateSession(request: NextRequest) {
       .maybeSingle();
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname =
-      roleRow?.role === "admin" ? "/admin" : "/profile";
+      roleRow?.role === "admin" ? "/admin" : "/dashboard";
     redirectUrl.search = "";
     return NextResponse.redirect(redirectUrl);
   }

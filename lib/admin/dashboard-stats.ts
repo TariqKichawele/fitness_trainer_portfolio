@@ -46,7 +46,10 @@ export async function getAdminDashboardStats(
   let revenueWeekCents = 0;
   const rows = bookingsRev.error ? [] : (bookingsRev.data ?? []);
   for (const row of rows) {
-    const occ = row.session_occurrences as { price_cents: number } | null;
+    const rawOcc = row.session_occurrences;
+    const occ = (Array.isArray(rawOcc) ? rawOcc[0] : rawOcc) as {
+      price_cents: number;
+    } | null | undefined;
     if (occ && typeof occ.price_cents === "number") {
       revenueWeekCents += occ.price_cents;
     }

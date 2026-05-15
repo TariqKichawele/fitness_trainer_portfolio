@@ -1,81 +1,13 @@
-import type {
-  AboutContent,
-  FooterContent,
-  Session,
-  Testimonial,
-} from "@/lib/types";
+import type { AboutContent, FooterContent, Testimonial } from "@/lib/types";
 
 export const trainerName = "Alex Moreno";
 
 export const siteTagline = "Strength, conditioning, and mobility—built around your goals.";
 
-export const sessions: Session[] = [
-  {
-    id: "strength-foundation",
-    name: "Strength Foundation",
-    day: "Monday",
-    category: "Strength",
-    durationMin: 60,
-    spots: 12,
-    spotsTaken: 8,
-    location: "Studio",
-  },
-  {
-    id: "beach-conditioning",
-    name: "Beach Conditioning",
-    day: "Tuesday",
-    category: "Conditioning",
-    durationMin: 45,
-    spots: 12,
-    spotsTaken: 4,
-    location: "Outdoor",
-  },
-  {
-    id: "mobility-flow",
-    name: "Mobility Flow",
-    day: "Wednesday",
-    category: "Mobility",
-    durationMin: 45,
-    spots: 10,
-    spotsTaken: 9,
-    location: "Studio",
-  },
-  {
-    id: "power-circuit",
-    name: "Power Circuit",
-    day: "Thursday",
-    category: "Conditioning",
-    durationMin: 50,
-    spots: 10,
-    spotsTaken: 3,
-    location: "Studio",
-  },
-  {
-    id: "upper-body-focus",
-    name: "Upper Body Focus",
-    day: "Friday",
-    category: "Strength",
-    durationMin: 60,
-    spots: 10,
-    spotsTaken: 5,
-    location: "Studio",
-  },
-  {
-    id: "park-training",
-    name: "Park Training",
-    day: "Saturday",
-    category: "Conditioning",
-    durationMin: 60,
-    spots: 12,
-    spotsTaken: 11,
-    location: "Outdoor",
-  },
-];
-
 export const hero = {
   title: "Train with purpose.",
   subtitle: `Hi, I'm ${trainerName}. Small-group sessions that blend strength, conditioning, and mobility—so you move better, feel stronger, and stay consistent.`,
-  primaryCta: "View weekly schedule",
+  primaryCta: "View upcoming sessions",
   secondaryCta: "About Alex",
 };
 
@@ -154,13 +86,3 @@ export const footer: FooterContent = {
   email: "hello@alexmoreno.training",
   socialLabel: "@alexmorenotraining",
 };
-
-export const weekdaysOrdered = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-] as const;
